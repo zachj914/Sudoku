@@ -1,4 +1,5 @@
 import random
+import copy
 
 class Board:
     def __init__(self, values):
@@ -14,7 +15,7 @@ class Board:
             self.unpacked.extend(row)
 
     def __repr__(self):
-        output = ""
+        output = "\n"
         for num, row in enumerate(self.rows):
             if num % 3 == 0:
                 output += "-------------------------\n"
@@ -33,11 +34,10 @@ class Board:
                else False
 
     def solve(self):
-        global output
+        output = []
         if 0 not in self.unpacked:
-            output.append(self)
-            print(output)
-            return True, output
+            output.append(Board(copy.deepcopy(self.values)))
+            return output
         for y in range(9):
             for x in range(9):
                 if self.values[y][x] == 0:
@@ -45,10 +45,12 @@ class Board:
                         if self.check_move((y, x), i):
                             self.values[y][x] = i
                             self.__init__(self.values)
-                            self.solve()
+                            solution = self.solve()
+                            if solution is not None:
+                                output.extend(solution)
                             self.values[y][x] = 0
                             self.__init__(self.values)
-                    return False, output
+                    return output if len(output) > 0 else None
 
 
 def check_member(index, value, container):
