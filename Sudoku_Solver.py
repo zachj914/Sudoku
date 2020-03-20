@@ -1,6 +1,7 @@
 import random
 import copy
 
+
 class Board:
     def __init__(self, values):
         self.values = values
@@ -28,16 +29,14 @@ class Board:
         return output
 
     def check_move(self, index, value):
-        return True if check_member(index[0], value, self.columns[index[1]]) and\
-               check_member(index[1], value, self.rows[index[0]]) and\
-               check_member(((index[0] % 3) * 3 + (index[1] % 3)), value, self.squares[(index[0] // 3) * 3 + (index[1] // 3)])\
+        return True if check_member(index[0], value, self.columns[index[1]])\
+               and check_member(index[1], value, self.rows[index[0]])\
+               and check_member(((index[0] % 3) * 3 + (index[1] % 3)),
+                                value, self.squares[(index[0] // 3) * 3
+                                + (index[1] // 3)])\
                else False
 
     def solve(self):
-        output = []
-        if 0 not in self.unpacked:
-            output.append(Board(copy.deepcopy(self.values)))
-            return output
         for y in range(9):
             for x in range(9):
                 if self.values[y][x] == 0:
@@ -45,12 +44,28 @@ class Board:
                         if self.check_move((y, x), i):
                             self.values[y][x] = i
                             self.__init__(self.values)
-                            solution = self.solve()
-                            if solution is not None:
-                                output.extend(solution)
+                            for solution in self.solve():
+                                yield solution
                             self.values[y][x] = 0
                             self.__init__(self.values)
-                    return output if len(output) > 0 else None
+                    return
+        yield self
+        # output = []
+        # for y in range(9):
+        #     for x in range(9):
+        #         if self.values[y][x] == 0:
+        #             for i in range(1, 10):
+        #                 if self.check_move((y, x), i):
+        #                     self.values[y][x] = i
+        #                     self.__init__(self.values)
+        #                     solution = self.solve()
+        #                     if solution is not None:
+        #                         output.extend(solution)
+        #                     self.values[y][x] = 0
+        #                     self.__init__(self.values)
+        #             return output if len(output) > 0 else None
+        # output.append(Board(copy.deepcopy(self.values)))
+        # return output
 
 
 def check_member(index, value, container):
@@ -61,7 +76,7 @@ def check_member(index, value, container):
 
 def generate_board():
     board = Board([[0 for i in range(9)] for j in range(9)])
-    print(board.solve())
+    board = board.solve()[0]
 
 
 def main():
@@ -72,10 +87,10 @@ def main():
                   [0, 0, 0, 5, 0, 6, 0, 0, 0],
                   [0, 0, 0, 0, 4, 0, 0, 1, 0],
                   [0, 4, 0, 0, 7, 0, 0, 0, 6],
-                  [9, 0, 7, 2, 0, 0, 4, 0, 0],
+                  [0, 0, 7, 2, 0, 0, 4, 0, 0],
                   [0, 5, 0, 0, 3, 1, 0, 2, 9]])
-    output = []
-    print(board.solve())
+    for item in board.solve():
+        print(item)
 
 
 if __name__ == '__main__':
