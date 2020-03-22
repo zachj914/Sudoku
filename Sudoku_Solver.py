@@ -47,16 +47,15 @@ class Board:
 def generate_board(fails):
     board = Board([[0 for i in range(9)] for j in range(9)])
     board = next(board.solve())
-    print(board)
     i = 0
     while i <= fails:
-        print(board.values)
         y, x = random.randint(0, 8), random.randint(0, 8)
         while board.values[y][x] == 0:
             y, x = random.randint(0, 8), random.randint(0, 8)
         cell_copy = copy.deepcopy(board.values[y][x])
         board.values[y][x] = 0
-        solutions = board.solve()
+        board_copy = Board(copy.deepcopy(board.values))
+        solutions = board_copy.solve()
         try:
             next(solutions)
             next(solutions)
@@ -64,7 +63,6 @@ def generate_board(fails):
             i += 1
         except StopIteration:
             pass
-    print(board.values)
     return board
 
 
