@@ -68,7 +68,7 @@ def generate_board(fails):
 
 
 def main():
-    board = Board([[0, 0, 0, 6, 0, 0, 8, 3, 0],
+    board = Board([[9, 0, 0, 6, 0, 0, 8, 3, 0],
                    [0, 0, 4, 3, 0, 0, 1, 0, 0],
                    [0, 9, 0, 0, 0, 2, 0, 0, 5],
                    [0, 7, 0, 0, 3, 5, 0, 0, 0],
@@ -77,7 +77,8 @@ def main():
                    [0, 0, 0, 0, 0, 0, 0, 7, 8],
                    [0, 0, 0, 0, 0, 0, 4, 2, 0],
                    [9, 0, 0, 0, 0, 0, 0, 6, 0]])
-    print(generate_board(5))
+    #print(generate_board(5))
+    print(next(board.solve()))
 
 
 if __name__ == '__main__':

@@ -1,5 +1,8 @@
 import pygame
 import Sudoku_Solver
+import time
+import random
+import copy
 pygame.init()
 pygame.key.set_repeat(120)
 width, height = 1080, 773
@@ -11,13 +14,23 @@ class Grid(Sudoku_Solver.Board):
     def __init__(self, values):
         '''Loads an image of the board and a rectangle representing it'''
         Sudoku_Solver.Board.__init__(self, values)
+        self.solved = Sudoku_Solver.Board(copy.deepcopy(self.values))
+        self.solved = next(self.solved.solve())
+        self.full = False
         self.board = pygame.image.load('Board.png').convert_alpha()
+        self.timer = pygame.image.load('Timer.png').convert_alpha()
         self.board_rect = pygame.Rect(width /
                                       2 - self.board.get_width() / 2,
                                       height /
                                       2 - self.board.get_height() / 2,
                                       self.board.get_width(),
                                       self.board.get_height())
+        self.timer_rect = pygame.Rect(width /
+                                      2 - self.timer.get_width() / 2,
+                                      self.board_rect.top -
+                                      self.timer.get_height() + 17,
+                                      self.timer.get_width(),
+                                      self.timer.get_height())
         self.starting_values = set()
         for y, row in enumerate(self.values):
             for x, num in enumerate(row):
@@ -25,7 +38,7 @@ class Grid(Sudoku_Solver.Board):
                     self.starting_values.add((y, x))
         self.errors = set()
         self.active_square = None
-        self.digit_pics = {1: '1.png', 2: '2.png', 3: '3.png', 4: '4.png',
+        self.digit_pics = {0: '0.png', 1: '1.png', 2: '2.png', 3: '3.png', 4: '4.png',
                            5: '5.png', 6: '6.png', 7: '7.png', 8: '8.png',
                            9: '9.png'}
         self.user_digit_pics = {1: 'User_1.png', 2: 'User_2.png',
@@ -39,9 +52,22 @@ class Grid(Sudoku_Solver.Board):
                                  7: 'Error_7.png', 8: 'Error_8.png',
                                  9: 'Error_9.png'}
 
-    def draw_board(self):
+    def draw_board(self, play_time):
         '''Draws the board, numbers, and cursor onto the screen'''
+        display.blit(self.timer, (self.timer_rect.left, self.timer_rect.top))
         display.blit(self.board, (self.board_rect.left, self.board_rect.top))
+        try:
+            display.blit(pygame.image.load(self.digit_pics[play_time[0] // 10]).convert_alpha(),
+                        (self.timer_rect.left + 23, self.timer_rect.top + 28))
+            display.blit(pygame.image.load(self.digit_pics[play_time[0] - (play_time[0] // 10) * 10]).convert_alpha(),
+                        (self.timer_rect.left + 82, self.timer_rect.top + 28))
+            display.blit(pygame.image.load(self.digit_pics[play_time[1] // 10]).convert_alpha(),
+                        (self.timer_rect.left + 141, self.timer_rect.top + 28))
+            display.blit(pygame.image.load(self.digit_pics[play_time[1] - (play_time[1] // 10) * 10]).convert_alpha(),
+                        (self.timer_rect.left + 200, self.timer_rect.top + 28))
+        except KeyError:
+            print(play_time)
+            pass
         for row_count, row in enumerate(self.values):
             for num_count, num in enumerate(row):
                 if num != 0:
@@ -88,33 +114,20 @@ class Grid(Sudoku_Solver.Board):
         if (row, column) not in self.starting_values:
             self.values[row][column] = number
         Sudoku_Solver.Board.__init__(self, self.values)
-        if not self.find_errors() and 0 not in self.unpacked:
+        self.full = True if 0 not in [i for row in self.values for i in row] else False
+        if not self.find_errors() and self.full:
             win_loop()
 
     def find_errors(self):
         self.errors = set()
-        for y, row in enumerate(self.rows):
-            for x, value in enumerate(row):
-                group = row.copy()
-                group[x] = 0
-                if value != 0 and value in group and (y, x) not in self.starting_values:
-                    self.errors.add((y, x))
-                    print('Row Error', value)
-        for x, column in enumerate(self.columns):
-            for y, value in enumerate(column):
-                group = column.copy()
-                group[y] = 0
-                if value != 0 and value in group and (y, x) not in self.starting_values:
-                    self.errors.add((y, x))
-                    print('Column Error', value)
-        for num, square in enumerate(self.squares):
-            for index, value in enumerate(square):
-                y, x = ((num // 3) * 3 + (index // 3), (num % 3) * 3 + (index % 3))
-                group = square.copy()
-                group[index] = 0
-                if value != 0 and value in group and (y, x) not in self.starting_values:
-                    self.errors.add((y, x))
-                    print('Square Error', value)
+        for y in range(9):
+            for x in range(9):
+                if (y, x) not in self.starting_values:
+                    value = self.values[y][x]
+                    self.values[y][x] = 0
+                    if not self.check_move((y, x), value):
+                        self.errors.add((y, x))
+                    self.values[y][x] = value
         return True if len(self.errors) != 0 else False
 
 
@@ -175,6 +188,8 @@ def title_loop():
     active_buttons = set()
     screen.draw(active_buttons)
     pygame.display.flip()
+    global board
+    board = Grid(Sudoku_Solver.generate_board(5).values)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -198,22 +213,36 @@ def title_loop():
 
 
 def play_loop():
+    hint_button = Button(pygame.image.load('Hint.png'), horz_alignment=1/8,
+                         vert_alignment=1/5)
     num_keys = {pygame.K_0: 0, pygame.K_1: 1, pygame.K_2: 2, pygame.K_3: 3,
                 pygame.K_4: 4, pygame.K_5: 5, pygame.K_6: 6, pygame.K_7: 7,
                 pygame.K_8: 8, pygame.K_9: 9}
     arrow_keys = {pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT}
-    screen = Screens('Background.jpg', set())
+    screen = Screens('Background.jpg', {hint_button})
     running = True
+    start = time.time()
+    active_buttons = set()
     while running:
-        screen.draw(set())
-        board.draw_board()
+        current = time.time()
+        play_time = time.strftime('%M%S', time.gmtime(current-start))
+        play_time = (int(play_time[0:2]), int(play_time[2:]))
+        screen.draw(active_buttons)
+        board.draw_board(play_time)
         pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                pygame.quit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse = pygame.mouse.get_pos()
                 board.active_square = board.get_square(mouse)
+                if hint_button.rect.collidepoint(mouse) and not board.full:
+                    y, x = random.randint(0, 8), random.randint(0, 8)
+                    while board.values[y][x] != 0:
+                        y, x = random.randint(0, 8), random.randint(0, 8)
+                    board.active_square = (x, y)
+                    board.play_square(board.solved.values[y][x])
             presses = pygame.key.get_pressed()
             if 1 in presses:
                 for key in num_keys.keys():
@@ -233,6 +262,11 @@ def play_loop():
                 if not board.board_rect.collidepoint(board.get_square_cords(
                                                      board.active_square)):
                     board.active_square = current_square
+        mouse = pygame.mouse.get_pos()
+        active_buttons = set()
+        for button in screen.buttons:
+            if button.rect.collidepoint(mouse):
+                active_buttons.add(button)
         pygame.time.Clock().tick(30)
 
 
@@ -244,16 +278,8 @@ def win_loop():
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.quit()
                 running = False
 
 
-board = Grid([[6, 7, 0, 3, 1, 0, 0, 9, 0],
-              [0, 0, 3, 0, 0, 4, 2, 0, 5],
-              [4, 0, 0, 0, 5, 0, 0, 7, 0],
-              [0, 3, 0, 0, 9, 0, 0, 0, 0],
-              [0, 0, 0, 5, 0, 6, 0, 0, 0],
-              [0, 0, 0, 0, 4, 0, 0, 1, 0],
-              [0, 4, 0, 0, 7, 0, 0, 0, 6],
-              [9, 0, 7, 2, 0, 0, 4, 0, 0],
-              [0, 5, 0, 0, 3, 1, 0, 2, 9]])
 title_loop()
