@@ -44,19 +44,22 @@ class Grid(Sudoku_Solver.Board):
                                 .convert_alpha() for i in range(1, 10)}
         self.error_digit_pics = {i: pygame.image.load('Error_'+str(i)+'.png')
                                  .convert_alpha() for i in range(1, 10)}
+        self.cursor = pygame.image.load('Cursor.png').convert_alpha()
+        self.active_cursor = pygame.image.load(
+            'Active_Cursor.png').convert_alpha()
 
     def draw_board(self, play_time):
         '''Draws the board, numbers, and cursor onto the screen'''
         display.blit(self.timer, (self.timer_rect.left, self.timer_rect.top))
         display.blit(self.board, (self.board_rect.left, self.board_rect.top))
         display.blit(self.digit_pics[play_time[0] // 10],
-                        (self.timer_rect.left + 23, self.timer_rect.top + 28))
+                     (self.timer_rect.left + 23, self.timer_rect.top + 28))
         display.blit(self.digit_pics[play_time[0] - (play_time[0] // 10) * 10],
-                        (self.timer_rect.left + 82, self.timer_rect.top + 28))
+                     (self.timer_rect.left + 82, self.timer_rect.top + 28))
         display.blit(self.digit_pics[play_time[1] // 10],
-                        (self.timer_rect.left + 141, self.timer_rect.top + 28))
+                     (self.timer_rect.left + 141, self.timer_rect.top + 28))
         display.blit(self.digit_pics[play_time[1] - (play_time[1] // 10) * 10],
-                        (self.timer_rect.left + 200, self.timer_rect.top + 28))
+                     (self.timer_rect.left + 200, self.timer_rect.top + 28))
         for row_count, row in enumerate(self.values):
             for num_count, num in enumerate(row):
                 if num != 0:
@@ -70,16 +73,15 @@ class Grid(Sudoku_Solver.Board):
 
         square = self.get_square(pygame.mouse.get_pos())
         if square is not None:
-            self.cursor = pygame.image.load('Cursor.png').convert_alpha()
             self.draw_square(self.cursor, square)
         if self.active_square is not None:
-            self.active_cursor = pygame.image.load('Active_Cursor.png').convert_alpha()
             self.draw_square(self.active_cursor, self.active_square)
 
     def get_square(self, mouse_pos):
         if not self.board_rect.collidepoint(mouse_pos):
             return None
-        mouse_pos = (mouse_pos[0] - self.board_rect.left, mouse_pos[1] - self.board_rect.top)
+        mouse_pos = (mouse_pos[0] - self.board_rect.left,
+                     mouse_pos[1] - self.board_rect.top)
         bar = 14
         x, y = None, None
         for i in range(9):
@@ -91,8 +93,9 @@ class Grid(Sudoku_Solver.Board):
         return[x, y] if None not in [x, y] else None
 
     def get_square_cords(self, cords):
-        return (self.board_rect.left + 28 + 59 * cords[0] + 14 * (cords[0]//3),
-                self.board_rect.top + 28 + 59 * cords[1] + 14 * (cords[1] // 3))
+        return (self.board_rect.left + 28 + 59 *
+                cords[0] + 14 * (cords[0]//3), self.board_rect.top +
+                28 + 59 * cords[1] + 14 * (cords[1] // 3))
 
     def draw_square(self, image, cords):
         cords = self.get_square_cords(cords)
@@ -103,7 +106,8 @@ class Grid(Sudoku_Solver.Board):
         if (row, column) not in self.starting_values:
             self.values[row][column] = number
         Sudoku_Solver.Board.__init__(self, self.values)
-        self.full = True if 0 not in [i for row in self.values for i in row] else False
+        self.full = True if 0 not in [i for row in self.values for i in row]\
+            else False
         if not self.find_errors() and self.full:
             win_loop()
 
@@ -141,9 +145,9 @@ class Button:
         self.rect = pygame.Rect(self.left_corner[0], self.left_corner[1],
                                 self.image.get_width(),
                                 self.image.get_height())
-        self.active_image = pygame.transform.scale(self.image,
-                                                   (int(self.rect.width * 1.1),
-                                                    int(self.rect.height * 1.1)))
+        self.active_image = pygame.transform.scale(
+            self.image, (int(self.rect.width * 1.1),
+                         int(self.rect.height * 1.1)))
         self.active_rect = self.rect.copy()
         self.active_rect.inflate_ip(int(self.rect.width * .1),
                                     int(self.rect.height * .1))
