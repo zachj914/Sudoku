@@ -38,45 +38,34 @@ class Grid(Sudoku_Solver.Board):
                     self.starting_values.add((y, x))
         self.errors = set()
         self.active_square = None
-        self.digit_pics = {0: '0.png', 1: '1.png', 2: '2.png', 3: '3.png', 4: '4.png',
-                           5: '5.png', 6: '6.png', 7: '7.png', 8: '8.png',
-                           9: '9.png'}
-        self.user_digit_pics = {1: 'User_1.png', 2: 'User_2.png',
-                                3: 'User_3.png', 4: 'User_4.png',
-                                5: 'User_5.png', 6: 'User_6.png',
-                                7: 'User_7.png', 8: 'User_8.png',
-                                9: 'User_9.png'}
-        self.error_digit_pics = {1: 'Error_1.png', 2: 'Error_2.png',
-                                 3: 'Error_3.png', 4: 'Error_4.png',
-                                 5: 'Error_5.png', 6: 'Error_6.png',
-                                 7: 'Error_7.png', 8: 'Error_8.png',
-                                 9: 'Error_9.png'}
+        self.digit_pics = {i: pygame.image.load(str(i)+'.png')
+                           .convert_alpha() for i in range(10)}
+        self.user_digit_pics = {i: pygame.image.load('User_'+str(i)+'.png')
+                                .convert_alpha() for i in range(1, 10)}
+        self.error_digit_pics = {i: pygame.image.load('Error_'+str(i)+'.png')
+                                 .convert_alpha() for i in range(1, 10)}
 
     def draw_board(self, play_time):
         '''Draws the board, numbers, and cursor onto the screen'''
         display.blit(self.timer, (self.timer_rect.left, self.timer_rect.top))
         display.blit(self.board, (self.board_rect.left, self.board_rect.top))
-        try:
-            display.blit(pygame.image.load(self.digit_pics[play_time[0] // 10]).convert_alpha(),
+        display.blit(self.digit_pics[play_time[0] // 10],
                         (self.timer_rect.left + 23, self.timer_rect.top + 28))
-            display.blit(pygame.image.load(self.digit_pics[play_time[0] - (play_time[0] // 10) * 10]).convert_alpha(),
+        display.blit(self.digit_pics[play_time[0] - (play_time[0] // 10) * 10],
                         (self.timer_rect.left + 82, self.timer_rect.top + 28))
-            display.blit(pygame.image.load(self.digit_pics[play_time[1] // 10]).convert_alpha(),
+        display.blit(self.digit_pics[play_time[1] // 10],
                         (self.timer_rect.left + 141, self.timer_rect.top + 28))
-            display.blit(pygame.image.load(self.digit_pics[play_time[1] - (play_time[1] // 10) * 10]).convert_alpha(),
+        display.blit(self.digit_pics[play_time[1] - (play_time[1] // 10) * 10],
                         (self.timer_rect.left + 200, self.timer_rect.top + 28))
-        except KeyError:
-            print(play_time)
-            pass
         for row_count, row in enumerate(self.values):
             for num_count, num in enumerate(row):
                 if num != 0:
                     if (row_count, num_count) in self.starting_values:
-                        digit = pygame.image.load(self.digit_pics[num]).convert_alpha()
+                        digit = self.digit_pics[num]
                     elif (row_count, num_count) in self.errors:
-                        digit = pygame.image.load(self.error_digit_pics[num]).convert_alpha()
+                        digit = self.error_digit_pics[num]
                     else:
-                        digit = pygame.image.load(self.user_digit_pics[num]).convert_alpha()
+                        digit = self.user_digit_pics[num]
                     self.draw_square(digit, (num_count, row_count))
 
         square = self.get_square(pygame.mouse.get_pos())
@@ -130,6 +119,13 @@ class Grid(Sudoku_Solver.Board):
                     self.values[y][x] = value
         return True if len(self.errors) != 0 else False
 
+    def hint(self):
+        y, x = random.randint(0, 8), random.randint(0, 8)
+        while board.values[y][x] != 0:
+            y, x = random.randint(0, 8), random.randint(0, 8)
+        board.active_square = (x, y)
+        board.play_square(board.solved.values[y][x])
+
 
 class Button:
     def __init__(self, image, left_corner=(None, None), horz_alignment=None,
@@ -149,7 +145,6 @@ class Button:
                                                    (int(self.rect.width * 1.1),
                                                     int(self.rect.height * 1.1)))
         self.active_rect = self.rect.copy()
-
         self.active_rect.inflate_ip(int(self.rect.width * .1),
                                     int(self.rect.height * .1))
 
@@ -238,11 +233,7 @@ def play_loop():
                 mouse = pygame.mouse.get_pos()
                 board.active_square = board.get_square(mouse)
                 if hint_button.rect.collidepoint(mouse) and not board.full:
-                    y, x = random.randint(0, 8), random.randint(0, 8)
-                    while board.values[y][x] != 0:
-                        y, x = random.randint(0, 8), random.randint(0, 8)
-                    board.active_square = (x, y)
-                    board.play_square(board.solved.values[y][x])
+                    board.hint()
             presses = pygame.key.get_pressed()
             if 1 in presses:
                 for key in num_keys.keys():
