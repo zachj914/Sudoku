@@ -17,8 +17,10 @@ class Grid(Sudoku_Solver.Board):
         self.solved = Sudoku_Solver.Board(copy.deepcopy(self.values))
         self.solved = next(self.solved.solve())
         self.full = False
-        self.board = pygame.image.load('Board.png').convert_alpha()
-        self.timer = pygame.image.load('Timer.png').convert_alpha()
+        self.notes = False
+        self.note_values = {(y, x): set() for y in range(9) for x in range(9)}
+        self.board = pygame.image.load('Images\\Board.png').convert_alpha()
+        self.timer = pygame.image.load('Images\\Timer.png').convert_alpha()
         self.board_rect = pygame.Rect(width /
                                       2 - self.board.get_width() / 2,
                                       height /
@@ -32,21 +34,23 @@ class Grid(Sudoku_Solver.Board):
                                       self.timer.get_width(),
                                       self.timer.get_height())
         self.starting_values = set()
-        for y, row in enumerate(self.values):
-            for x, num in enumerate(row):
+        for y in range(9):
+            for x in range(9):
                 if self.values[y][x] != 0:
                     self.starting_values.add((y, x))
         self.errors = set()
         self.active_square = None
-        self.digit_pics = {i: pygame.image.load(str(i)+'.png')
+        self.digit_pics = {i: pygame.image.load('Images\\' +str(i)+ '.png')
                            .convert_alpha() for i in range(10)}
-        self.user_digit_pics = {i: pygame.image.load('User_'+str(i)+'.png')
+        self.user_digit_pics = {i: pygame.image.load('Images\\User_'+str(i)+'.png')
                                 .convert_alpha() for i in range(1, 10)}
-        self.error_digit_pics = {i: pygame.image.load('Error_'+str(i)+'.png')
+        self.error_digit_pics = {i: pygame.image.load('Images\\Error_'+str(i)+'.png')
                                  .convert_alpha() for i in range(1, 10)}
-        self.cursor = pygame.image.load('Cursor.png').convert_alpha()
+        self.note_digit_pics = {i: pygame.image.load('Images\\Notes_'+str(i)+'.png')
+                                .convert_alpha() for i in range(1,10)}
+        self.cursor = pygame.image.load('Images\\Cursor.png').convert_alpha()
         self.active_cursor = pygame.image.load(
-            'Active_Cursor.png').convert_alpha()
+            'Images\\Active_Cursor.png').convert_alpha()
 
     def draw_board(self, play_time):
         '''Draws the board, numbers, and cursor onto the screen'''
@@ -70,6 +74,9 @@ class Grid(Sudoku_Solver.Board):
                     else:
                         digit = self.user_digit_pics[num]
                     self.draw_square(digit, (num_count, row_count))
+        for cords, notes in self.note_values.items():
+            for note in notes:
+                self.draw_square(self.note_digit_pics[note], (cords[1], cords[0]))
 
         square = self.get_square(pygame.mouse.get_pos())
         if square is not None:
@@ -104,12 +111,17 @@ class Grid(Sudoku_Solver.Board):
     def play_square(self, number):
         row, column = (self.active_square[1], self.active_square[0])
         if (row, column) not in self.starting_values:
+            self.note_values[(row, column)] = set()
             self.values[row][column] = number
-        Sudoku_Solver.Board.__init__(self, self.values)
         self.full = True if 0 not in [i for row in self.values for i in row]\
             else False
         if not self.find_errors() and self.full:
             win_loop()
+
+    def take_note(self, number):
+        row, column = (self.active_square[1], self.active_square[0])
+        if board.values[row][column] == 0:
+            self.note_values[(row, column)].add(number)
 
     def find_errors(self):
         self.errors = set()
@@ -163,6 +175,13 @@ class Screens:
     def __init__(self, background, buttons):
         self.background = pygame.image.load(background).convert()
         self.buttons = buttons
+    
+    def change(self, item_changed, replacement):
+        if type(item_changed) == Button:
+            self.buttons.discard(item_changed)
+            self.buttons.add(replacement)
+        else:
+            self.background = replacement
 
     def draw(self, active_buttons):
         display.blit(self.background, (0, 0))
@@ -175,27 +194,30 @@ class Screens:
 
 def title_loop():
     running = True
-    play_button = Button(pygame.image.load('PlayText.png').convert_alpha(),
+    play_button = Button(pygame.image.load('Images\\PlayText.png').convert_alpha(),
                          horz_alignment=1/2, vert_alignment=7/8)
-    options_button = Button(pygame.image.load('Options.png').convert_alpha(),
+    options_button = Button(pygame.image.load('Images\\Options.png').convert_alpha(),
                             horz_alignment=1/5, vert_alignment=7/8)
     leaderboard_button = Button(pygame.image.load(
-                                'Leaderboard.png').convert_alpha(),
+                                'Images\\Leaderboard.png').convert_alpha(),
                                 horz_alignment=4/5, vert_alignment=7/8)
-    screen = Screens('Titlescreen.jpg', {play_button, options_button,
+    screen = Screens('Images\\Titlescreen.jpg', {play_button, options_button,
                                          leaderboard_button})
+    loading = pygame.image.load('Images\\Loading.jpg').convert()
     active_buttons = set()
     screen.draw(active_buttons)
     pygame.display.flip()
-    global board
-    board = Grid(Sudoku_Solver.generate_board(5).values)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                raise SystemExit(0)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse = pygame.mouse.get_pos()
                 if play_button.rect.collidepoint(mouse):
+                    display.blit(loading, (0,0))
+                    pygame.display.flip()
+                    global board
+                    board = Grid(Sudoku_Solver.generate_board(5).values)
                     play_loop()
                     running = False
 
@@ -212,13 +234,18 @@ def title_loop():
 
 
 def play_loop():
-    hint_button = Button(pygame.image.load('Hint.png'), horz_alignment=1/8,
+    notes_button_off = Button(pygame.image.load('Images\\Notes.png'), horz_alignment=7/8,
+                          vert_alignment=1/5)
+    notes_button_on = Button(pygame.image.load('Images\\Notes_On.png'), horz_alignment=7/8,
+                             vert_alignment=1/5)
+    notes_button = notes_button_off
+    hint_button = Button(pygame.image.load('Images\\Hint.png'), horz_alignment=1/8,
                          vert_alignment=1/5)
     num_keys = {pygame.K_0: 0, pygame.K_1: 1, pygame.K_2: 2, pygame.K_3: 3,
                 pygame.K_4: 4, pygame.K_5: 5, pygame.K_6: 6, pygame.K_7: 7,
                 pygame.K_8: 8, pygame.K_9: 9}
     arrow_keys = {pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT}
-    screen = Screens('Background.jpg', {hint_button})
+    screen = Screens('Images\\Background.jpg', {hint_button, notes_button})
     running = True
     start = time.time()
     active_buttons = set()
@@ -232,17 +259,27 @@ def play_loop():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                pygame.quit()
+                raise SystemExit(0)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse = pygame.mouse.get_pos()
                 board.active_square = board.get_square(mouse)
                 if hint_button.rect.collidepoint(mouse) and not board.full:
                     board.hint()
+                if notes_button.rect.collidepoint(mouse):
+                    if notes_button_off in screen.buttons:
+                        screen.change(notes_button_off, notes_button_on)
+                        board.notes = True
+                    else:
+                        screen.change(notes_button_on, notes_button_off)
+                        board.notes = False
             presses = pygame.key.get_pressed()
-            if 1 in presses:
+            if 1 in presses and board.active_square is not None:
                 for key in num_keys.keys():
                     if presses[key] == 1:
-                        board.play_square(num_keys[key])
+                        if board.notes:
+                            board.take_note(num_keys[key])
+                        else:
+                            board.play_square(num_keys[key])
                 current_square = board.active_square.copy()
                 for key in arrow_keys:
                     if presses[key] == 1:
@@ -273,7 +310,7 @@ def win_loop():
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
+                raise SystemExit(0)
                 running = False
 
 
