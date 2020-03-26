@@ -4,7 +4,7 @@ import time
 import random
 import copy
 pygame.init()
-pygame.key.set_repeat(120, 120)
+#pygame.key.set_repeat(120)
 width, height = 1080, 773
 display = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Sudoku')
@@ -156,9 +156,7 @@ class Grid(Sudoku_Solver.Board):
 
     def undo(self):
         try:
-            print(self.past_moves)
             target = self.past_moves.pop()
-            print(self.past_moves)
             if target[0] == 'Move':
                 self.active_square = (target[1][1], target[1][0])
                 self.play_square(target[2], undo=True)
@@ -271,18 +269,25 @@ def play_loop():
     num_keys = {pygame.K_0: 0, pygame.K_1: 1, pygame.K_2: 2, pygame.K_3: 3,
                 pygame.K_4: 4, pygame.K_5: 5, pygame.K_6: 6, pygame.K_7: 7,
                 pygame.K_8: 8, pygame.K_9: 9}
-    arrow_keys = {pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT}
+    arrow_keys = {pygame.K_UP: (1, -1),
+                  pygame.K_DOWN: (1, 1),
+                  pygame.K_LEFT: (0, -1),
+                  pygame.K_RIGHT: (0, 1)}
     screen = Screens('Images\\Background.jpg', {hint_button, notes_button, undo_button})
     running = True
     start = time.time()
     active_buttons = set()
+    counter = 0
+    scroll = [None, False]
     while running:
+        counter = (counter + 1) % 3
         current = time.time()
         play_time = time.strftime('%M%S', time.gmtime(current-start))
         play_time = (int(play_time[0:2]), int(play_time[2:]))
         screen.draw(active_buttons)
         board.draw_board(play_time)
         pygame.display.flip()
+        presses = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -302,8 +307,9 @@ def play_loop():
                         board.notes = False
                 if undo_button.rect.collidepoint(mouse):
                     board.undo()
-            presses = pygame.key.get_pressed()
-            if 1 in presses:
+            if event.type == pygame.KEYDOWN:
+                presses = pygame.key.get_pressed()
+                press = True
                 if board.active_square is not None:
                     for key in num_keys.keys():
                         if presses[key] == 1:
@@ -311,20 +317,20 @@ def play_loop():
                                 board.take_note(num_keys[key])
                             else:
                                 board.play_square(num_keys[key])
-                    current_square = board.active_square.copy()
-                    for key in arrow_keys:
+                if board.active_square is not None:
+                    for key in arrow_keys.keys():
                         if presses[key] == 1:
-                            if key == pygame.K_UP:
-                                board.active_square[1] -= 1
-                            if key == pygame.K_DOWN:
-                                board.active_square[1] += 1
-                            if key == pygame.K_LEFT:
-                                board.active_square[0] -= 1
-                            if key == pygame.K_RIGHT:
-                                board.active_square[0] += 1
-                    if not board.board_rect.collidepoint(board.get_square_cords(
-                                                        board.active_square)):
-                        board.active_square = current_square
+                            scroll = [key, True]
+            if event.type == pygame.KEYUP:
+                if event.key == scroll[0]:
+                    scroll = [None, False]
+        if (scroll[0] is not None and counter == 1) or scroll[1]:
+            scroll[1] = False
+            counter = 1
+            current_square = board.active_square.copy()
+            board.active_square[arrow_keys[scroll[0]][0]] += arrow_keys[scroll[0]][1]
+            if not board.board_rect.collidepoint(board.get_square_cords(board.active_square)):
+                board.active_square = current_square
         mouse = pygame.mouse.get_pos()
         active_buttons = set()
         for button in screen.buttons:
