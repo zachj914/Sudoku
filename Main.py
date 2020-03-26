@@ -4,7 +4,7 @@ import time
 import random
 import copy
 pygame.init()
-#pygame.key.set_repeat(120)
+pygame.key.set_repeat(120)
 width, height = 1080, 773
 display = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Sudoku')
@@ -124,9 +124,9 @@ class Grid(Sudoku_Solver.Board):
 
     def take_note(self, number):
         row, column = (self.active_square[1], self.active_square[0])
-        self.past_moves.append(('Note', copy.deepcopy((row, column)),
-                                copy.deepcopy(self.note_values[(row, column)])))
         if board.values[row][column] == 0:
+            self.past_moves.append(('Note', copy.deepcopy((row, column)),
+                                copy.deepcopy(self.note_values[(row, column)])))
             if number == 0:
                 self.note_values[(row, column)] = set()
             elif number in self.note_values[(row, column)]:
@@ -277,17 +277,14 @@ def play_loop():
     running = True
     start = time.time()
     active_buttons = set()
-    counter = 0
-    scroll = [None, False]
+    presses = pygame.key.get_pressed()
     while running:
-        counter = (counter + 1) % 3
         current = time.time()
         play_time = time.strftime('%M%S', time.gmtime(current-start))
         play_time = (int(play_time[0:2]), int(play_time[2:]))
         screen.draw(active_buttons)
         board.draw_board(play_time)
         pygame.display.flip()
-        presses = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -309,28 +306,21 @@ def play_loop():
                     board.undo()
             if event.type == pygame.KEYDOWN:
                 presses = pygame.key.get_pressed()
-                press = True
-                if board.active_square is not None:
-                    for key in num_keys.keys():
-                        if presses[key] == 1:
-                            if board.notes:
-                                board.take_note(num_keys[key])
-                            else:
-                                board.play_square(num_keys[key])
                 if board.active_square is not None:
                     for key in arrow_keys.keys():
                         if presses[key] == 1:
-                            scroll = [key, True]
+                            current_square = copy.deepcopy(board.active_square)
+                            board.active_square[arrow_keys[key][0]] += arrow_keys[key][1]
+                        if not board.board_rect.collidepoint(board.get_square_cords(
+                                                                board.active_square)):
+                            board.active_square = current_square
             if event.type == pygame.KEYUP:
-                if event.key == scroll[0]:
-                    scroll = [None, False]
-        if (scroll[0] is not None and counter == 1) or scroll[1]:
-            scroll[1] = False
-            counter = 1
-            current_square = board.active_square.copy()
-            board.active_square[arrow_keys[scroll[0]][0]] += arrow_keys[scroll[0]][1]
-            if not board.board_rect.collidepoint(board.get_square_cords(board.active_square)):
-                board.active_square = current_square
+                if board.active_square is not None:
+                    if event.key in num_keys.keys():
+                        if board.notes:
+                            board.take_note(num_keys[event.key])
+                        else:
+                            board.play_square(num_keys[event.key])
         mouse = pygame.mouse.get_pos()
         active_buttons = set()
         for button in screen.buttons:
