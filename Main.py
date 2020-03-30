@@ -112,8 +112,12 @@ class Grid(Sudoku_Solver.Board):
     def play_square(self, number, undo=False):
         row, column = (self.active_square[1], self.active_square[0])
         if self.values[row][column] != number and undo == False:
-            self.past_moves.append(('Move', copy.deepcopy((row, column)),
-                                    copy.deepcopy(self.values[row][column])))
+            if self.note_values[(row, column)]:
+                self.past_moves.append(('Note', copy.deepcopy((row, column)),
+                                copy.deepcopy(self.note_values[(row, column)])))
+            else:
+                self.past_moves.append(('Move', copy.deepcopy((row, column)),
+                                        copy.deepcopy(self.values[row][column])))
         if (row, column) not in self.starting_values:
             self.note_values[(row, column)] = set()
             self.values[row][column] = number
@@ -157,11 +161,13 @@ class Grid(Sudoku_Solver.Board):
     def undo(self):
         try:
             target = self.past_moves.pop()
-            if target[0] == 'Move':
-                self.active_square = (target[1][1], target[1][0])
-                self.play_square(target[2], undo=True)
-            elif target[0] == 'Note':
-                self.note_values[(target[1][0], target[1][1])] = target[2]
+            if (target[1][1], target[1][0]) not in self.starting_values:
+                if target[0] == 'Move':
+                    self.active_square = (target[1][1], target[1][0])
+                    self.play_square(target[2], undo=True)
+                elif target[0] == 'Note':
+                    self.values[target[1][0]][target[1][1]] = 0
+                    self.note_values[(target[1][0], target[1][1])] = target[2]
         except IndexError:
             pass
 
@@ -192,6 +198,7 @@ class Button:
 
     def draw_active(self):
         display.blit(self.active_image, self.active_rect)
+
 
 
 class Screens:
@@ -314,6 +321,13 @@ def play_loop():
                         if not board.board_rect.collidepoint(board.get_square_cords(
                                                                 board.active_square)):
                             board.active_square = current_square
+                if presses[pygame.K_TAB] == 1:
+                    if notes_button_off in screen.buttons:
+                        screen.change(notes_button_off, notes_button_on)
+                        board.notes = True
+                    else:
+                        screen.change(notes_button_on, notes_button_off)
+                        board.notes = False
             if event.type == pygame.KEYUP:
                 if board.active_square is not None:
                     if event.key in num_keys.keys():
@@ -338,7 +352,5 @@ def win_loop():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 raise SystemExit(0)
-                running = False
-
 
 title_loop()
