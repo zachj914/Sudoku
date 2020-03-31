@@ -48,7 +48,9 @@ class Grid(Sudoku_Solver.Board):
         self.error_digit_pics = {i: pygame.image.load('Images\\Error_'+str(i)+'.png')
                                  .convert_alpha() for i in range(1, 10)}
         self.note_digit_pics = {i: pygame.image.load('Images\\Notes_'+str(i)+'.png')
-                                .convert_alpha() for i in range(1,10)}
+                                .convert_alpha() for i in range(1, 10)}
+        self.highlight_digit_pics = {i: pygame.image.load('Images\\Highlight_' + str(i) + '.png')
+                                     .convert_alpha() for i in range(1, 10)}
         self.cursor = pygame.image.load('Images\\Cursor.png').convert_alpha()
         self.active_cursor = pygame.image.load(
             'Images\\Active_Cursor.png').convert_alpha()
@@ -68,7 +70,10 @@ class Grid(Sudoku_Solver.Board):
         for row_count, row in enumerate(self.values):
             for num_count, num in enumerate(row):
                 if num != 0:
-                    if (row_count, num_count) in self.starting_values:
+                    if self.active_square is not None and\
+                            num == self.values[self.active_square[1]][self.active_square[0]]:
+                        digit = self.highlight_digit_pics[num]
+                    elif (row_count, num_count) in self.starting_values:
                         digit = self.digit_pics[num]
                     elif (row_count, num_count) in self.errors:
                         digit = self.error_digit_pics[num]
@@ -250,6 +255,8 @@ def title_loop():
                     board = Grid(Sudoku_Solver.generate_board(5).values)
                     play_loop()
                     running = False
+                if options_button.rect.collidepoint(mouse):
+                    options_loop()
 
         mouse = pygame.mouse.get_pos()
         prev_buttons = set(active_buttons)
@@ -263,6 +270,17 @@ def title_loop():
     pygame.time.Clock().tick(30)
 
 
+def options_loop():
+    screen = Screens('Images\\Options.jpg', set())
+    running = True
+    screen.draw(set())
+    pygame.display.flip()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                raise SystemExit(0)
+
+
 def play_loop():
     notes_button_off = Button(pygame.image.load('Images\\Notes.png'), horz_alignment=7/8,
                           vert_alignment=1/5)
@@ -273,7 +291,7 @@ def play_loop():
                          vert_alignment=1/5)
     undo_button = Button(pygame.image.load('Images\\Undo.png'), horz_alignment=1/8,
                          vert_alignment=2/5)
-    num_keys = {pygame.K_0: 0, pygame.K_1: 1, pygame.K_2: 2, pygame.K_3: 3,
+    num_keys = {pygame.K_DELETE: 0, pygame.K_BACKSPACE: 0, pygame.K_0: 0, pygame.K_1: 1, pygame.K_2: 2, pygame.K_3: 3,
                 pygame.K_4: 4, pygame.K_5: 5, pygame.K_6: 6, pygame.K_7: 7,
                 pygame.K_8: 8, pygame.K_9: 9}
     arrow_keys = {pygame.K_UP: (1, -1),
