@@ -160,15 +160,13 @@ class Grid(Sudoku_Solver.Board):
         while board.values[y][x] != 0:
             y, x = random.randint(0, 8), random.randint(0, 8)
         board.active_square = [x, y]
-        board.play_square(board.solved.values[y][x])
+        board.play_square(board.solved.values[y][x], undo = True)
         board.starting_values.add((y, x))
 
     def undo(self):
         try:
             target = self.past_moves.pop()
-            print(target)
             if (target[1][0], target[1][1]) not in self.starting_values:
-                print("apss")
                 if target[0] == 'Move':
                     self.active_square = (target[1][1], target[1][0])
                     self.play_square(target[2], undo=True)
