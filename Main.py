@@ -116,7 +116,8 @@ class Grid(Sudoku_Solver.Board):
 
     def play_square(self, number, undo=False):
         row, column = (self.active_square[1], self.active_square[0])
-        if self.values[row][column] != number and undo is False:
+        if (self.values[row][column] != number or self.note_values[(row, column)])\
+                and undo is False:
             if self.note_values[(row, column)]:
                 self.past_moves.append(('Note', copy.deepcopy((row, column)),
                                 copy.deepcopy(self.note_values[(row, column)])))
@@ -173,6 +174,7 @@ class Grid(Sudoku_Solver.Board):
                 elif target[0] == 'Note':
                     self.values[target[1][0]][target[1][1]] = 0
                     self.note_values[(target[1][0], target[1][1])] = target[2]
+                    self.find_errors()
         except IndexError:
             pass
 
