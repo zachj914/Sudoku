@@ -143,6 +143,11 @@ class Grid(Sudoku_Solver.Board):
                 self.note_values[(row, column)].discard(number)
             else:
                 self.note_values[(row, column)].add(number)
+        elif (row, column) not in self.starting_values:
+            self.past_moves.append(('Move', copy.deepcopy((row, column)),
+                                    copy.deepcopy(self.values[row][column])))
+            self.values[row][column] = 0
+
 
     def find_errors(self):
         self.errors = set()
@@ -172,6 +177,7 @@ class Grid(Sudoku_Solver.Board):
                     self.active_square = (target[1][1], target[1][0])
                     self.play_square(target[2], undo=True)
                 elif target[0] == 'Note':
+                    self.active_square = (target[1][1], target[1][0])
                     self.values[target[1][0]][target[1][1]] = 0
                     self.note_values[(target[1][0], target[1][1])] = target[2]
                     self.find_errors()
