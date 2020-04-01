@@ -21,14 +21,14 @@ class Grid(Sudoku_Solver.Board):
         self.note_values = {(y, x): set() for y in range(9) for x in range(9)}
         self.board = pygame.image.load('Images\\Board.png').convert_alpha()
         self.timer = pygame.image.load('Images\\Timer.png').convert_alpha()
-        self.board_rect = pygame.Rect(width /
-                                      2 - self.board.get_width() / 2,
-                                      height /
-                                      2 - self.board.get_height() / 2,
+        self.board_rect = pygame.Rect(width //
+                                      2 - self.board.get_width() // 2,
+                                      height //
+                                      2 - self.board.get_height() // 2,
                                       self.board.get_width(),
                                       self.board.get_height())
-        self.timer_rect = pygame.Rect(width /
-                                      2 - self.timer.get_width() / 2,
+        self.timer_rect = pygame.Rect(width //
+                                      2 - self.timer.get_width() // 2,
                                       self.board_rect.top -
                                       self.timer.get_height() + 17,
                                       self.timer.get_width(),
@@ -185,11 +185,11 @@ class Button:
         self.image = image
         self.left_corner = list(left_corner)
         if self.left_corner[0] is None:
-            self.left_corner[0] = int(width*horz_alignment)\
-                - self.image.get_width()/2
+            self.left_corner[0] = int(width*horz_alignment\
+                - self.image.get_width()/2)
         if self.left_corner[1] is None:
-            self.left_corner[1] = int(height*vert_alignment)\
-                - self.image.get_height()/2
+            self.left_corner[1] = int(height*vert_alignment\
+                - self.image.get_height()/2)
         self.rect = pygame.Rect(self.left_corner[0], self.left_corner[1],
                                 self.image.get_width(),
                                 self.image.get_height())
