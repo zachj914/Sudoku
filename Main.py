@@ -3,7 +3,6 @@ import Sudoku_Solver
 import time
 import random
 import copy
-import pickle
 
 
 class Grid(Sudoku_Solver.Board):
@@ -233,6 +232,15 @@ class Button:
         self.active_image, self.active_bool_image =\
             self.active_bool_image, self.active_image
 
+    def change_location(self, left_corner):
+        self.left_corner = list(left_corner)
+        self.rect = pygame.Rect(self.left_corner[0], self.left_corner[1],
+                                self.image.get_width(),
+                                self.image.get_height())
+        self.active_rect = self.rect.copy()
+        self.active_rect.inflate_ip(int(self.rect.width * .1),
+                                    int(self.rect.height * .1))
+
 
 class Screens:
     def __init__(self, background, buttons):
@@ -280,7 +288,8 @@ def title_loop():
                         display.blit(loading, (0, 0))
                         pygame.display.flip()
                         global board
-                        board = Grid(Sudoku_Solver.generate_board(5).values)
+                        board = Grid(
+                            Sudoku_Solver.generate_board(difficulty).values)
                         board.notes = notes_button.on
                         play_loop()
                         running = False
@@ -293,13 +302,16 @@ def title_loop():
 def options_loop():
     running = True
     active_buttons = set()
+    global difficulty_image
+    global difficulty
     while running:
         options_screen.draw(active_buttons)
+        display.blit(difficulty_image, (632, 576))
         active_buttons = set()
         pygame.display.flip()
         for button in options_screen.find_buttons():
-            if button is back_arrow:
-                active_buttons.add(back_arrow)
+            if button not in no_actives:
+                active_buttons.add(button)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 raise SystemExit(0)
@@ -307,15 +319,21 @@ def options_loop():
                 for button in options_screen.find_buttons():
                     if button is back_arrow:
                         running = False
-                    else:
+                    elif button in no_actives:
                         button.switch()
                         options[button] = False if options[button] else True
-                        with open('Settings.txt', 'w') as file:
-                            # print(options[hover_to_select])
-                            file.write(str(int(options[hover_to_select])))
-                            file.write(str(int(options[highlight_errors])))
-                            file.write(str(int(options[highlight_digits])))
-                            file.write(str(options['difficulty']))
+                        write_settings()
+                    else:
+                        if button is diff_back:
+                            difficulty = (difficulty - 2) % 6
+                        elif button is diff_forward:
+                            difficulty = (difficulty + 2) % 6
+                        difficulty += 6 if difficulty == 0 else 0
+                        write_settings()
+                        difficulty_image = diff_inv_lookup[difficulty]
+                        diff_forward.change_location((
+                            636 + difficulty_image.get_width(), 576))
+
         pygame.time.Clock().tick(30)
 
 
@@ -379,6 +397,14 @@ def win_loop():
                 raise SystemExit(0)
 
 
+def write_settings():
+    with open('Settings.txt', 'w') as file:
+        file.write(str(int(options[hover_to_select])))
+        file.write(str(int(options[highlight_errors])))
+        file.write(str(int(options[highlight_digits])))
+        file.write(str(difficulty))
+
+
 pygame.init()
 pygame.key.set_repeat(120)
 width, height = 1080, 773
@@ -393,6 +419,9 @@ arrow_keys = {pygame.K_UP: (1, -1),
               pygame.K_LEFT: (0, -1),
               pygame.K_RIGHT: (0, 1)}
 
+# Load in settings
+with open('Settings.txt', 'r') as file:
+    settings = file.read()
 
 # Title screen assets
 play_button = Button(pygame.image.load
@@ -412,21 +441,34 @@ loading = pygame.image.load('Images\\Loading.jpg').convert()
 back_arrow = Button(pygame.image.load('Images\\Back_Arrow.png'),
                     left_corner=(25, 15))
 hover_to_select = Button(pygame.image.load('Images\\Box.png'),
-                                left_corner=(645, 476),
-                                bool_image=pygame.image.load
-                                ('Images\\Selected_Box.png'))
+                         left_corner=(645, 476),
+                         bool_image=pygame.image.load
+                         ('Images\\Selected_Box.png'))
 highlight_errors = Button(pygame.image.load('Images\\Box.png'),
-                                 left_corner=(642, 509),
-                                 bool_image=pygame.image.load
-                                 ('Images\\Selected_Box.png'))
+                          left_corner=(642, 509),
+                          bool_image=pygame.image.load
+                          ('Images\\Selected_Box.png'))
 highlight_digits = Button(pygame.image.load('Images\\Box.png'),
-                                 left_corner=(707, 542),
-                                 bool_image=pygame.image.load
-                                 ('Images\\Selected_Box.png'))
+                          left_corner=(707, 542),
+                          bool_image=pygame.image.load
+                          ('Images\\Selected_Box.png'))
+no_actives = {hover_to_select, highlight_errors, highlight_digits}
+easy = pygame.image.load('Images\\Easy.png').convert_alpha()
+medium = pygame.image.load('Images\\Medium.png').convert_alpha()
+hard = pygame.image.load('Images\\Hard.png').convert_alpha()
+diff_lookup = {easy: 2, medium: 4, hard: 6}
+diff_inv_lookup = {2: easy, 4: medium, 6: hard}
+difficulty = int(settings[3])
+difficulty_image = diff_inv_lookup[difficulty]
+diff_back = Button(pygame.image.load('Images\\Back_Difficulty.png'),
+                   left_corner=(605, 576))
+diff_forward = Button(pygame.image.load('Images\\Forward_Difficulty.png'),
+                      left_corner=(636 + difficulty_image.get_width(), 576))
 options_screen = Screens('Images\\Options.jpg', {back_arrow,
                                                  hover_to_select,
                                                  highlight_errors,
-                                                 highlight_digits})
+                                                 highlight_digits,
+                                                 diff_back, diff_forward})
 
 # Play screen Assets
 notes_button = Button(pygame.image.load('Images\\Notes.png'),
@@ -442,14 +484,10 @@ play_screen = Screens('Images\\Background.jpg',
 # Win screen assets
 win_screen = Screens('Images\\WinScreen.jpg', set())
 
-# Load in settings
-with open('Settings.txt', 'r') as file:
-    settings = file.read()
-
+# Configures options
 options = {hover_to_select: bool(int(settings[0])),
            highlight_errors: bool(int(settings[1])),
-           highlight_digits: bool(int(settings[2])),
-           'difficulty': settings[3]}
+           highlight_digits: bool(int(settings[2]))}
 for key in options.keys():
     if type(key) == Button and options[key]:
         key.switch()
