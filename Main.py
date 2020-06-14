@@ -3,6 +3,7 @@ import Sudoku_Solver
 import time
 import random
 import copy
+import os
 
 
 class Grid(Sudoku_Solver.Board):
@@ -14,8 +15,8 @@ class Grid(Sudoku_Solver.Board):
         self.full = False
         self.notes = False
         self.note_values = {(y, x): set() for y in range(9) for x in range(9)}
-        self.board = pygame.image.load('Images\\Board.png').convert_alpha()
-        self.timer = pygame.image.load('Images\\Timer.png').convert_alpha()
+        self.board = pygame.image.load('Images' + slash + 'Board.png').convert_alpha()
+        self.timer = pygame.image.load('Images' + slash + 'Timer.png').convert_alpha()
         self.board_rect = pygame.Rect(width //
                                       2 - self.board.get_width() // 2,
                                       height //
@@ -36,23 +37,23 @@ class Grid(Sudoku_Solver.Board):
                     self.starting_values.add((y, x))
         self.errors = set()
         self.active_square = [0, 0]
-        self.digit_pics = {i: pygame.image.load('Images\\' + str(i) + '.png')
+        self.digit_pics = {i: pygame.image.load('Images' + slash + '' + str(i) + '.png')
                            .convert_alpha() for i in range(10)}
-        self.user_digit_pics = {i: pygame.image.load('Images\\User_'
+        self.user_digit_pics = {i: pygame.image.load('Images' + slash + 'User_'
                                 + str(i) + '.png').convert_alpha()
                                 for i in range(1, 10)}
-        self.error_digit_pics = {i: pygame.image.load('Images\\Error_'
+        self.error_digit_pics = {i: pygame.image.load('Images' + slash + 'Error_'
                                  + str(i) + '.png').convert_alpha()
                                  for i in range(1, 10)}
-        self.note_digit_pics = {i: pygame.image.load('Images\\Notes_'
+        self.note_digit_pics = {i: pygame.image.load('Images' + slash + 'Notes_'
                                 + str(i) + '.png').convert_alpha()
                                 for i in range(1, 10)}
-        self.highlight_digit_pics = {i: pygame.image.load('Images\\Highlight_'
+        self.highlight_digit_pics = {i: pygame.image.load('Images' + slash + 'Highlight_'
                                      + str(i) + '.png').convert_alpha()
                                      for i in range(1, 10)}
-        self.cursor = pygame.image.load('Images\\Cursor.png').convert_alpha()
+        self.cursor = pygame.image.load('Images' + slash + 'Cursor.png').convert_alpha()
         self.active_cursor = pygame.image.load(
-            'Images\\Active_Cursor.png').convert_alpha()
+            'Images' + slash + 'Active_Cursor.png').convert_alpha()
 
     def draw_board(self, play_time):
         '''Draws the board, numbers, and cursor onto the screen'''
@@ -406,6 +407,7 @@ def write_settings():
 
 
 pygame.init()
+slash = os.sep
 pygame.key.set_repeat(120)
 width, height = 1080, 773
 display = pygame.display.set_mode((width, height))
@@ -425,64 +427,64 @@ with open('Settings.txt', 'r') as file:
 
 # Title screen assets
 play_button = Button(pygame.image.load
-                     ('Images\\PlayText.png').convert_alpha(),
+                     ('Images' + slash + 'PlayText.png').convert_alpha(),
                      horz_alignment=1/2, vert_alignment=7/8)
 options_button = Button(pygame.image.load
-                        ('Images\\Options.png').convert_alpha(),
+                        ('Images' + slash + 'Options.png').convert_alpha(),
                         horz_alignment=1/5, vert_alignment=7/8)
 leaderboard_button = Button(pygame.image.load(
-                            'Images\\Leaderboard.png').convert_alpha(),
+                            'Images' + slash + 'Leaderboard.png').convert_alpha(),
                             horz_alignment=4/5, vert_alignment=7/8)
-title_screen = Screens('Images\\Titlescreen.jpg', {play_button, options_button,
+title_screen = Screens('Images' + slash + 'TitleScreen.jpg', {play_button, options_button,
                                                    leaderboard_button})
-loading = pygame.image.load('Images\\Loading.jpg').convert()
+loading = pygame.image.load('Images' + slash + 'Loading.jpg').convert()
 
 # Options screen assets
-back_arrow = Button(pygame.image.load('Images\\Back_Arrow.png'),
+back_arrow = Button(pygame.image.load('Images' + slash + 'Back_Arrow.png'),
                     left_corner=(25, 15))
-hover_to_select = Button(pygame.image.load('Images\\Box.png'),
+hover_to_select = Button(pygame.image.load('Images' + slash + 'Box.png'),
                          left_corner=(645, 476),
                          bool_image=pygame.image.load
-                         ('Images\\Selected_Box.png'))
-highlight_errors = Button(pygame.image.load('Images\\Box.png'),
+                         ('Images' + slash + 'Selected_Box.png'))
+highlight_errors = Button(pygame.image.load('Images' + slash + 'Box.png'),
                           left_corner=(642, 509),
                           bool_image=pygame.image.load
-                          ('Images\\Selected_Box.png'))
-highlight_digits = Button(pygame.image.load('Images\\Box.png'),
+                          ('Images' + slash + 'Selected_Box.png'))
+highlight_digits = Button(pygame.image.load('Images' + slash + 'Box.png'),
                           left_corner=(707, 542),
                           bool_image=pygame.image.load
-                          ('Images\\Selected_Box.png'))
+                          ('Images' + slash + 'Selected_Box.png'))
 no_actives = {hover_to_select, highlight_errors, highlight_digits}
-easy = pygame.image.load('Images\\Easy.png').convert_alpha()
-medium = pygame.image.load('Images\\Medium.png').convert_alpha()
-hard = pygame.image.load('Images\\Hard.png').convert_alpha()
+easy = pygame.image.load('Images' + slash + 'Easy.png').convert_alpha()
+medium = pygame.image.load('Images' + slash + 'Medium.png').convert_alpha()
+hard = pygame.image.load('Images' + slash + 'Hard.png').convert_alpha()
 diff_lookup = {easy: 2, medium: 4, hard: 6}
 diff_inv_lookup = {2: easy, 4: medium, 6: hard}
 difficulty = int(settings[3])
 difficulty_image = diff_inv_lookup[difficulty]
-diff_back = Button(pygame.image.load('Images\\Back_Difficulty.png'),
+diff_back = Button(pygame.image.load('Images' + slash + 'Back_Difficulty.png'),
                    left_corner=(605, 576))
-diff_forward = Button(pygame.image.load('Images\\Forward_Difficulty.png'),
+diff_forward = Button(pygame.image.load('Images' + slash + 'Forward_Difficulty.png'),
                       left_corner=(636 + difficulty_image.get_width(), 576))
-options_screen = Screens('Images\\Options.jpg', {back_arrow,
+options_screen = Screens('Images' + slash + 'Options.jpg', {back_arrow,
                                                  hover_to_select,
                                                  highlight_errors,
                                                  highlight_digits,
                                                  diff_back, diff_forward})
 
 # Play screen Assets
-notes_button = Button(pygame.image.load('Images\\Notes.png'),
+notes_button = Button(pygame.image.load('Images' + slash + 'Notes.png'),
                       horz_alignment=7/8, vert_alignment=1/5,
-                      bool_image=pygame.image.load('Images\\Notes_On.png'))
-hint_button = Button(pygame.image.load('Images\\Hint.png'),
+                      bool_image=pygame.image.load('Images' + slash + 'Notes_On.png'))
+hint_button = Button(pygame.image.load('Images' + slash + 'Hint.png'),
                      horz_alignment=1/8, vert_alignment=1/5)
-undo_button = Button(pygame.image.load('Images\\Undo.png'),
+undo_button = Button(pygame.image.load('Images' + slash + 'Undo.png'),
                      horz_alignment=1/8, vert_alignment=2/5)
-play_screen = Screens('Images\\Background.jpg',
+play_screen = Screens('Images' + slash + 'Background.jpg',
                       {hint_button, notes_button, undo_button})
 
 # Win screen assets
-win_screen = Screens('Images\\WinScreen.jpg', set())
+win_screen = Screens('Images' + slash + 'WinScreen.jpg', set())
 
 # Configures options
 options = {hover_to_select: bool(int(settings[0])),
