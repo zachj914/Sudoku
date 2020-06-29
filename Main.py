@@ -293,7 +293,6 @@ def title_loop():
                             Sudoku_Solver.generate_board(difficulty).values)
                         board.notes = notes_button.on
                         play_loop()
-                        running = False
                     elif button is options_button:
                         options_loop()
         pygame.display.flip()
@@ -364,6 +363,8 @@ def play_loop():
                     notes_button.switch()
                 if undo_button.rect.collidepoint(mouse):
                     board.undo()
+                if back_arrow.rect.collidepoint(mouse):
+                    running = False
             if event.type == pygame.KEYDOWN:
                 presses = pygame.key.get_pressed()
                 for key in arrow_keys.keys():
@@ -481,7 +482,7 @@ hint_button = Button(pygame.image.load('Images' + slash + 'Hint.png'),
 undo_button = Button(pygame.image.load('Images' + slash + 'Undo.png'),
                      horz_alignment=1/8, vert_alignment=2/5)
 play_screen = Screens('Images' + slash + 'Background.jpg',
-                      {hint_button, notes_button, undo_button})
+                      {hint_button, notes_button, undo_button, back_arrow})
 
 # Win screen assets
 win_screen = Screens('Images' + slash + 'WinScreen.jpg', set())
