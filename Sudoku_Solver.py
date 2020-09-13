@@ -82,7 +82,8 @@ def main():
                    [0, 0, 0, 0, 0, 0, 0, 7, 8],
                    [0, 0, 0, 0, 0, 0, 4, 2, 0],
                    [9, 0, 0, 0, 0, 0, 0, 6, 0]])
-    print(generate_board(5))
+    for solution in board.solve():
+        print(solution)
 
 
 if __name__ == '__main__':

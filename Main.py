@@ -8,15 +8,15 @@ import os
 
 class Grid(Sudoku_Solver.Board):
     def __init__(self, values):
-        '''Loads an image of the board and a rectangle representing it'''
+        '''Loads an image of the playable board'''
         Sudoku_Solver.Board.__init__(self, values)
         self.solved = Sudoku_Solver.Board(copy.deepcopy(self.values))
         self.solved = next(self.solved.solve())
         self.full = False
         self.notes = False
         self.note_values = {(y, x): set() for y in range(9) for x in range(9)}
-        self.board = pygame.image.load('Images' + slash + 'Board.png').convert_alpha()
-        self.timer = pygame.image.load('Images' + slash + 'Timer.png').convert_alpha()
+        self.board = image_load('Board.png')
+        self.timer = image_load('Timer.png')
         self.board_rect = pygame.Rect(width //
                                       2 - self.board.get_width() // 2,
                                       height //
@@ -37,23 +37,17 @@ class Grid(Sudoku_Solver.Board):
                     self.starting_values.add((y, x))
         self.errors = set()
         self.active_square = [0, 0]
-        self.digit_pics = {i: pygame.image.load('Images' + slash + '' + str(i) + '.png')
-                           .convert_alpha() for i in range(10)}
-        self.user_digit_pics = {i: pygame.image.load('Images' + slash + 'User_'
-                                + str(i) + '.png').convert_alpha()
+        self.digit_pics = {i: image_load(str(i) + '.png') for i in range(10)}
+        self.user_digit_pics = {i: image_load('User_' + str(i) + '.png')
                                 for i in range(1, 10)}
-        self.error_digit_pics = {i: pygame.image.load('Images' + slash + 'Error_'
-                                 + str(i) + '.png').convert_alpha()
+        self.error_digit_pics = {i: image_load('Error_' + str(i) + '.png')
                                  for i in range(1, 10)}
-        self.note_digit_pics = {i: pygame.image.load('Images' + slash + 'Notes_'
-                                + str(i) + '.png').convert_alpha()
+        self.note_digit_pics = {i: image_load('Notes_' + str(i) + '.png')
                                 for i in range(1, 10)}
-        self.highlight_digit_pics = {i: pygame.image.load('Images' + slash + 'Highlight_'
-                                     + str(i) + '.png').convert_alpha()
-                                     for i in range(1, 10)}
-        self.cursor = pygame.image.load('Images' + slash + 'Cursor.png').convert_alpha()
-        self.active_cursor = pygame.image.load(
-            'Images' + slash + 'Active_Cursor.png').convert_alpha()
+        self.highlight_digit_pics = {i: image_load(
+            'Highlight_' + str(i) + '.png') for i in range(1, 10)}
+        self.cursor = image_load('Cursor.png')
+        self.active_cursor = image_load('Active_Cursor.png')
 
     def draw_board(self, play_time):
         '''Draws the board, numbers, and cursor onto the screen'''
@@ -245,7 +239,7 @@ class Button:
 
 class Screens:
     def __init__(self, background, buttons):
-        self.background = pygame.image.load(background).convert()
+        self.background = background
         self.buttons = buttons
 
     def change(self, item_changed, replacement):
@@ -268,6 +262,14 @@ class Screens:
         for button in self.buttons:
             if button.rect.collidepoint(mouse):
                 yield button
+
+
+def image_load(name, alpha=True):
+    path = "Images" + os.sep + name
+    if alpha is True:
+        return pygame.image.load(path).convert_alpha()
+    else:
+        return pygame.image.load(path).convert()
 
 
 def title_loop():
@@ -408,7 +410,6 @@ def write_settings():
 
 
 pygame.init()
-slash = os.sep
 pygame.key.set_repeat(120)
 width, height = 1080, 773
 display = pygame.display.set_mode((width, height))
@@ -427,65 +428,55 @@ with open('Settings.txt', 'r') as file:
     settings = file.read()
 
 # Title screen assets
-play_button = Button(pygame.image.load
-                     ('Images' + slash + 'PlayText.png').convert_alpha(),
+play_button = Button(image_load('PlayText.png'),
                      horz_alignment=1/2, vert_alignment=7/8)
-options_button = Button(pygame.image.load
-                        ('Images' + slash + 'Options.png').convert_alpha(),
+options_button = Button(image_load('Options.png'),
                         horz_alignment=1/5, vert_alignment=7/8)
-leaderboard_button = Button(pygame.image.load(
-                            'Images' + slash + 'Leaderboard.png').convert_alpha(),
+leaderboard_button = Button(image_load('Leaderboard.png'),
                             horz_alignment=4/5, vert_alignment=7/8)
-title_screen = Screens('Images' + slash + 'TitleScreen.jpg', {play_button, options_button,
-                                                   leaderboard_button})
-loading = pygame.image.load('Images' + slash + 'Loading.jpg').convert()
+title_screen = Screens(image_load('TitleScreen.jpg', alpha=False),
+                       {play_button, options_button, leaderboard_button})
+loading = image_load('Loading.jpg', alpha=False)
 
 # Options screen assets
-back_arrow = Button(pygame.image.load('Images' + slash + 'Back_Arrow.png'),
-                    left_corner=(25, 15))
-hover_to_select = Button(pygame.image.load('Images' + slash + 'Box.png'),
-                         left_corner=(645, 476),
-                         bool_image=pygame.image.load
-                         ('Images' + slash + 'Selected_Box.png'))
-highlight_errors = Button(pygame.image.load('Images' + slash + 'Box.png'),
+back_arrow = Button(image_load('Back_Arrow.png'), left_corner=(25, 15))
+hover_to_select = Button(image_load('Box.png'), left_corner=(645, 476),
+                         bool_image=image_load('Selected_Box.png'))
+highlight_errors = Button(image_load('Box.png'),
                           left_corner=(642, 509),
-                          bool_image=pygame.image.load
-                          ('Images' + slash + 'Selected_Box.png'))
-highlight_digits = Button(pygame.image.load('Images' + slash + 'Box.png'),
+                          bool_image=image_load('Selected_Box.png'))
+highlight_digits = Button(image_load('Box.png'),
                           left_corner=(707, 542),
-                          bool_image=pygame.image.load
-                          ('Images' + slash + 'Selected_Box.png'))
+                          bool_image=image_load('Selected_Box.png'))
 no_actives = {hover_to_select, highlight_errors, highlight_digits}
-easy = pygame.image.load('Images' + slash + 'Easy.png').convert_alpha()
-medium = pygame.image.load('Images' + slash + 'Medium.png').convert_alpha()
-hard = pygame.image.load('Images' + slash + 'Hard.png').convert_alpha()
+easy = image_load('Easy.png')
+medium = image_load('Medium.png')
+hard = image_load('Hard.png')
 diff_lookup = {easy: 2, medium: 4, hard: 6}
 diff_inv_lookup = {2: easy, 4: medium, 6: hard}
 difficulty = int(settings[3])
 difficulty_image = diff_inv_lookup[difficulty]
-diff_back = Button(pygame.image.load('Images' + slash + 'Back_Difficulty.png'),
+diff_back = Button(image_load('Back_Difficulty.png'),
                    left_corner=(605, 576))
-diff_forward = Button(pygame.image.load('Images' + slash + 'Forward_Difficulty.png'),
+diff_forward = Button(image_load('Forward_Difficulty.png'),
                       left_corner=(636 + difficulty_image.get_width(), 576))
-options_screen = Screens('Images' + slash + 'Options.jpg', {back_arrow,
-                                                 hover_to_select,
-                                                 highlight_errors,
-                                                 highlight_digits,
-                                                 diff_back, diff_forward})
+options_screen = Screens(image_load('Options.jpg', alpha=False),
+                         {back_arrow, hover_to_select, highlight_errors,
+                          highlight_digits, diff_back, diff_forward})
 
 # Play screen Assets
-notes_button = Button(pygame.image.load('Images' + slash + 'Notes.png'),
+notes_button = Button(image_load('Notes.png'),
                       horz_alignment=7/8, vert_alignment=1/5,
-                      bool_image=pygame.image.load('Images' + slash + 'Notes_On.png'))
-hint_button = Button(pygame.image.load('Images' + slash + 'Hint.png'),
+                      bool_image=image_load('Notes_On.png'))
+hint_button = Button(image_load('Hint.png'),
                      horz_alignment=1/8, vert_alignment=1/5)
-undo_button = Button(pygame.image.load('Images' + slash + 'Undo.png'),
+undo_button = Button(image_load('Undo.png'),
                      horz_alignment=1/8, vert_alignment=2/5)
-play_screen = Screens('Images' + slash + 'Background.jpg',
+play_screen = Screens(image_load('Background.jpg'),
                       {hint_button, notes_button, undo_button, back_arrow})
 
 # Win screen assets
-win_screen = Screens('Images' + slash + 'WinScreen.jpg', set())
+win_screen = Screens(image_load('WinScreen.jpg'), set())
 
 # Configures options
 options = {hover_to_select: bool(int(settings[0])),
