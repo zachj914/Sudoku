@@ -9,12 +9,15 @@ import os
 class Grid(Sudoku_Solver.Board):
     def __init__(self, values):
         '''Loads an image of the playable board'''
+        # Generates board values
         Sudoku_Solver.Board.__init__(self, values)
         self.solved = Sudoku_Solver.Board(copy.deepcopy(self.values))
         self.solved = next(self.solved.solve())
         self.full = False
         self.notes = False
         self.note_values = {(y, x): set() for y in range(9) for x in range(9)}
+
+        # Loads in board assets
         self.board = image_load('Board.png')
         self.timer = image_load('Timer.png')
         self.board_rect = pygame.Rect(width //
@@ -29,14 +32,6 @@ class Grid(Sudoku_Solver.Board):
                                       self.timer.get_height() + 17,
                                       self.timer.get_width(),
                                       self.timer.get_height())
-        self.starting_values = set()
-        self.past_moves = []
-        for y in range(9):
-            for x in range(9):
-                if self.values[y][x] != 0:
-                    self.starting_values.add((y, x))
-        self.errors = set()
-        self.active_square = [0, 0]
         self.digit_pics = {i: image_load(str(i) + '.png') for i in range(10)}
         self.user_digit_pics = {i: image_load('User_' + str(i) + '.png')
                                 for i in range(1, 10)}
@@ -49,10 +44,24 @@ class Grid(Sudoku_Solver.Board):
         self.cursor = image_load('Cursor.png')
         self.active_cursor = image_load('Active_Cursor.png')
 
+        # Saves the board's starting values so they can be differentiated from
+        # user input
+        self.starting_values = set()
+        self.past_moves = []
+        for y in range(9):
+            for x in range(9):
+                if self.values[y][x] != 0:
+                    self.starting_values.add((y, x))
+        self.errors = set()
+        self.active_square = [0, 0]
+
     def draw_board(self, play_time):
         '''Draws the board, numbers, and cursor onto the screen'''
+        # Loads in board and timer frames
         display.blit(self.timer, (self.timer_rect.left, self.timer_rect.top))
         display.blit(self.board, (self.board_rect.left, self.board_rect.top))
+
+        # Displays current game time
         display.blit(self.digit_pics[play_time[0] // 10],
                      (self.timer_rect.left + 23, self.timer_rect.top + 28))
         display.blit(self.digit_pics[play_time[0] - (play_time[0] // 10) * 10],
@@ -61,6 +70,8 @@ class Grid(Sudoku_Solver.Board):
                      (self.timer_rect.left + 141, self.timer_rect.top + 28))
         display.blit(self.digit_pics[play_time[1] - (play_time[1] // 10) * 10],
                      (self.timer_rect.left + 200, self.timer_rect.top + 28))
+
+        # Picks how to display each square's value and notes on the board
         for row_count, row in enumerate(self.values):
             for num_count, num in enumerate(row):
                 if num != 0:
@@ -81,6 +92,7 @@ class Grid(Sudoku_Solver.Board):
                 self.draw_square(self.note_digit_pics[note],
                                  (cords[1], cords[0]))
 
+        # Picks active square based on mouse input
         square = self.get_square(pygame.mouse.get_pos())
         if square is not None and not options[hover_to_select]:
             self.draw_square(self.cursor, square)
@@ -89,6 +101,8 @@ class Grid(Sudoku_Solver.Board):
         self.draw_square(self.active_cursor, self.active_square)
 
     def get_square(self, mouse_pos):
+        '''Converts mouse's X,Y position into the square that the mouse is over
+        '''
         if not self.board_rect.collidepoint(mouse_pos):
             return None
         mouse_pos = (mouse_pos[0] - self.board_rect.left,
@@ -104,16 +118,21 @@ class Grid(Sudoku_Solver.Board):
         return[x, y] if None not in [x, y] else None
 
     def get_square_cords(self, cords):
+        '''Returns the graphical coordinates of a logical square'''
         return (self.board_rect.left + 28 + 59 *
                 cords[0] + 14 * (cords[0]//3), self.board_rect.top +
                 28 + 59 * cords[1] + 14 * (cords[1] // 3))
 
     def draw_square(self, image, cords):
+        '''Draws "image" into the square specified by "cords"'''
         cords = self.get_square_cords(cords)
         display.blit(image, (cords[0], cords[1]))
 
     def play_square(self, number, undo=False):
+        '''Plays the specified number in the current active square'''
         row, column = (self.active_square[1], self.active_square[0])
+
+        # Saves the previous values to past_moves so that they can be undone
         if (self.values[row][column] != number or
                 self.note_values[(row, column)]) and undo is False:
             if self.note_values[(row, column)]:
@@ -124,6 +143,8 @@ class Grid(Sudoku_Solver.Board):
                 self.past_moves.append(('Move', copy.deepcopy((row, column)),
                                         copy.deepcopy(self.values[
                                             row][column])))
+
+        # Plays number if the square is playable and checks for win and errors
         if (row, column) not in self.starting_values:
             self.note_values[(row, column)] = set()
             self.values[row][column] = number
@@ -133,6 +154,7 @@ class Grid(Sudoku_Solver.Board):
             win_loop()
 
     def take_note(self, number):
+        '''Adds number to the set of note values for the active square'''
         row, column = (self.active_square[1], self.active_square[0])
         if board.values[row][column] == 0:
             self.past_moves.append(('Note', copy.deepcopy((row, column)),
@@ -150,6 +172,7 @@ class Grid(Sudoku_Solver.Board):
             self.values[row][column] = 0
 
     def find_errors(self):
+        '''Checks the board for conflicting entries'''
         self.errors = set()
         for y in range(9):
             for x in range(9):
@@ -162,6 +185,8 @@ class Grid(Sudoku_Solver.Board):
         return True if len(self.errors) != 0 else False
 
     def hint(self):
+        '''Enters the correct value into the selected square if empty.
+        If not empty, a random empty square will be selected and filled'''
         if board.values[board.active_square[1]][board.active_square[0]] != 0:
             y, x = random.randint(0, 8), random.randint(0, 8)
             while board.values[y][x] != 0:
@@ -173,6 +198,7 @@ class Grid(Sudoku_Solver.Board):
         board.starting_values.add((y, x))
 
     def undo(self):
+        '''Returns the board to the state of the last move on the undo stack'''
         try:
             target = self.past_moves.pop()
             if (target[1][0], target[1][1]) not in self.starting_values:
@@ -192,7 +218,7 @@ class Button:
     def __init__(self, image, left_corner=(None, None), horz_alignment=None,
                  vert_alignment=None, bool_image=None):
         self.image = image
-        self.bool_image = bool_image
+        self.bool_image = bool_image # Alternative image for active/inactive
         self.on = [False]
         self.left_corner = list(left_corner)
         if self.left_corner[0] is None:
@@ -265,6 +291,8 @@ class Screens:
 
 
 def image_load(name, alpha=True):
+    '''Returns image loaded from the Images folder and converted into a pygame
+    surface'''
     path = "Images" + os.sep + name
     if alpha is True:
         return pygame.image.load(path).convert_alpha()
@@ -434,7 +462,7 @@ options_button = Button(image_load('Options.png'),
                         horz_alignment=1/5, vert_alignment=7/8)
 leaderboard_button = Button(image_load('Leaderboard.png'),
                             horz_alignment=4/5, vert_alignment=7/8)
-title_screen = Screens(image_load('TitleScreen.jpg', alpha=False),
+title_screen = Screens(image_load('Title_Screen.jpg', alpha=False),
                        {play_button, options_button, leaderboard_button})
 loading = image_load('Loading.jpg', alpha=False)
 
@@ -476,7 +504,7 @@ play_screen = Screens(image_load('Background.jpg'),
                       {hint_button, notes_button, undo_button, back_arrow})
 
 # Win screen assets
-win_screen = Screens(image_load('WinScreen.jpg'), set())
+win_screen = Screens(image_load('Win_Screen.jpg'), set())
 
 # Configures options
 options = {hover_to_select: bool(int(settings[0])),
