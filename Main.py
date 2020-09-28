@@ -218,7 +218,7 @@ class Button:
     def __init__(self, image, left_corner=(None, None), horz_alignment=None,
                  vert_alignment=None, bool_image=None):
         self.image = image
-        self.bool_image = bool_image # Alternative image for active/inactive
+        self.bool_image = bool_image  # Alternative image for active/inactive
         self.on = [False]
         self.left_corner = list(left_corner)
         if self.left_corner[0] is None:
